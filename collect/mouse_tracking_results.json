@@ -208,5 +208,47 @@
       "x": -0.726093,
       "y": 0.535098
     }
+  },
+  {
+    "timestamp": "2026-03-07 23:31:38",
+    "mouse_position": {
+      "x": 916,
+      "y": 1119
+    },
+    "window_rect": {
+      "left": 1979,
+      "top": 654,
+      "width": 1464,
+      "height": 869
+    },
+    "offset": {
+      "x": -1063,
+      "y": 465
+    },
+    "normalized_offset": {
+      "x": -0.726093,
+      "y": 0.535098
+    }
+  },
+  {
+    "timestamp": "2026-03-07 23:31:44",
+    "mouse_position": {
+      "x": 916,
+      "y": 1119
+    },
+    "window_rect": {
+      "left": 1979,
+      "top": 654,
+      "width": 1464,
+      "height": 869
+    },
+    "offset": {
+      "x": -1063,
+      "y": 465
+    },
+    "normalized_offset": {
+      "x": -0.726093,
+      "y": 0.535098
+    }
   }
 ]

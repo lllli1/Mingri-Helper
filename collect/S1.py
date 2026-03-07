@@ -87,6 +87,44 @@ def main():
     for _ in range(50):
         pyautogui.scroll(-5)  # 每次滚动-5，共50次
         time.sleep(0.05)  # 每次滚动间隔0.05秒
+
+    # 完成所有操作后等待1秒
+    time.sleep(1)
     
+    # 图像识别并点击
+    try:
+        # 截图游戏窗口区域
+        screenshot = pyautogui.screenshot(region=(game_window_left, game_window_top, game_window_width, game_window_height))
+        
+        # 查找目标图像
+        button_location = pyautogui.locate("D:\\mingriHelper\\collect\\images\\fathernode\\fathernode_1.png", screenshot, confidence=0.8)
+        
+        if button_location:
+            # 计算按钮中心坐标
+            button_x, button_y = pyautogui.center(button_location)
+            # 转换为全局坐标
+            global_x = game_window_left + button_x
+            global_y = game_window_top + button_y
+            
+            # 在截图上绘制红框（用于调试）
+            from PIL import ImageDraw
+            draw = ImageDraw.Draw(screenshot)
+            draw.rectangle([button_location.left, button_location.top, button_location.left + button_location.width, button_location.top + button_location.height], outline="red", width=2)
+            # 保存带红框的截图
+            screenshot.save("debug_highlight.png")
+            
+            # 移动鼠标到按钮位置并点击
+            pyautogui.moveTo(global_x, global_y)
+            time.sleep(0.5)
+            pyautogui.click()
+            print(f"已点击识别到的按钮: ({global_x}, {global_y})")
+        else:
+            print("未找到目标图像")
+            # 保存当前截图用于调试
+            screenshot.save("debug_screenshot.png")
+            
+    except Exception as e:
+        print(f"图像识别失败: {e}")
+
 if __name__ == "__main__":
     main()
