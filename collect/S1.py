@@ -77,6 +77,14 @@ def main():
     pyautogui.click()
     time.sleep(0.5)
     
+    # 在开始滚动前，先点击相对坐标(0.15, 0.15)位置
+    init_x = game_window_left + int(0.15 * game_window_width)
+    init_y = game_window_top + int(0.15 * game_window_height)
+    pyautogui.moveTo(init_x, init_y)
+    pyautogui.click()
+    print(f"已点击初始化位置: ({init_x}, {init_y})")
+    time.sleep(0.5)
+    
     # 移动到新的归一化偏移位置进行下滚操作 (0.15, 0.36)
     scroll_x = game_window_left + int(0.15 * game_window_width)
     scroll_y = game_window_top + int(0.36 * game_window_height)
@@ -88,43 +96,29 @@ def main():
         pyautogui.scroll(-5)  # 每次滚动-5，共50次
         time.sleep(0.05)  # 每次滚动间隔0.05秒
 
-    # 完成所有操作后等待1秒
-    time.sleep(1)
+    # 完成所有操作后等待3秒
+    time.sleep(3)
     
-    # 图像识别并点击
-    try:
-        # 截图游戏窗口区域
-        screenshot = pyautogui.screenshot(region=(game_window_left, game_window_top, game_window_width, game_window_height))
+    # 使用线性函数计算y坐标序列，从最大y值开始依次点击
+    # y = -0.0588 * x + 0.9425，其中x为序号(0-9)
+    base_y = 0.9425
+    slope = -0.0588
+    normalized_offset_x = 0.15
+    
+    for i in range(10):
+        # 计算当前y坐标
+        normalized_offset_y = round(base_y + slope * i, 2)
+        target_x = game_window_left + int(normalized_offset_x * game_window_width)
+        target_y = game_window_top + int(normalized_offset_y * game_window_height)
         
-        # 查找目标图像
-        button_location = pyautogui.locate("D:\\mingriHelper\\collect\\images\\fathernode\\fathernode_1.png", screenshot, confidence=0.8)
+        # 移动到目标位置并点击
+        pyautogui.moveTo(target_x, target_y)
+        pyautogui.click()
+        print(f"已点击位置: ({target_x}, {target_y})")
         
-        if button_location:
-            # 计算按钮中心坐标
-            button_x, button_y = pyautogui.center(button_location)
-            # 转换为全局坐标
-            global_x = game_window_left + button_x
-            global_y = game_window_top + button_y
-            
-            # 在截图上绘制红框（用于调试）
-            from PIL import ImageDraw
-            draw = ImageDraw.Draw(screenshot)
-            draw.rectangle([button_location.left, button_location.top, button_location.left + button_location.width, button_location.top + button_location.height], outline="red", width=2)
-            # 保存带红框的截图
-            screenshot.save("debug_highlight.png")
-            
-            # 移动鼠标到按钮位置并点击
-            pyautogui.moveTo(global_x, global_y)
+        # 每次点击间隔0.5秒
+        if i < 9:  # 最后一次不需要等待
             time.sleep(0.5)
-            pyautogui.click()
-            print(f"已点击识别到的按钮: ({global_x}, {global_y})")
-        else:
-            print("未找到目标图像")
-            # 保存当前截图用于调试
-            screenshot.save("debug_screenshot.png")
-            
-    except Exception as e:
-        print(f"图像识别失败: {e}")
 
 if __name__ == "__main__":
     main()
