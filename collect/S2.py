@@ -4,6 +4,7 @@ import cv2
 import numpy as np
 from PIL import Image
 import win32gui
+import math
 
 def get_game_window_rect():
     def enum_windows_callback(hwnd, windows):
@@ -116,36 +117,36 @@ else:
     print(f"未找到目标，最大置信度: {target_result[1] if target_result else 'N/A'}")
     
 time.sleep(2)
-# 捕获相对坐标区域截图
-if result is not None:
-    # 重新获取最新截图
-    new_result = capture_game_window()
-    if new_result is not None:
-        screen_img, left, top = new_result
-        _, width, height = screen_img.shape[::-1]
-        # 提取指定区域
-        x1 = int(0.85 * width)
-        y1 = int(0.10 * height)
-        x2 = int(0.99 * width)
-        y2 = int(0.28 * height)
-        region = screen_img[y1:y2, x1:x2]
-        
-        # 在指定区域内进行模板匹配
-        arrow_template = cv2.imread(r'D:\mingriHelper\collect\images\arrow\arrow_ico.png', cv2.IMREAD_GRAYSCALE)
-        if arrow_template is not None:
-            gray_region = cv2.cvtColor(region, cv2.COLOR_RGB2GRAY)
-            result = cv2.matchTemplate(gray_region, arrow_template, cv2.TM_CCOEFF_NORMED)
-            min_val, max_val, min_loc, max_loc = cv2.minMaxLoc(result)
-            
-            # 总是框出最高置信度的位置
-            h, w = arrow_template.shape[:2]
-            top_left = (max_loc[0], max_loc[1])
-            bottom_right = (top_left[0] + w, top_left[1] + h)
-            cv2.rectangle(region, top_left, bottom_right, (0, 0, 255), 2)
-            cv2.putText(region, f'Arrow Found! Conf: {max_val:.2f}', (10, 30), 
-                       cv2.FONT_HERSHEY_SIMPLEX, 0.7, (0, 0, 255), 2)
-            
-            # 只保存该区域带标记的截图
-            marked_region_path = 'marked_relative_region.png'
-            cv2.imwrite(marked_region_path, cv2.cvtColor(region, cv2.COLOR_RGB2BGR))
-            print(f"在指定区域内找到箭头图标，置信度: {max_val:.3f}, 已保存到 {marked_region_path}")
+
+# 根据Y键记录的两个点截取矩形区域（使用归一化坐标）
+# 第一个点 (0.913934, 0.174914) - 左上角
+# 第二个点 (0.927596, 0.187572) - 右下角
+norm_point1 = (0.92, 0.176)
+norm_point2 = (0.934, 0.201)
+
+# 获取最新截图
+new_result = capture_game_window()
+if new_result is not None:
+    screen_img, left, top = new_result
+    height, width = screen_img.shape[:2]
+    
+    # 将归一化坐标转换为像素坐标
+    x1 = int(norm_point1[0] * width)
+    y1 = int(norm_point1[1] * height)
+    x2 = int(norm_point2[0] * width)
+    y2 = int(norm_point2[1] * height)
+    
+    # 确保坐标顺序正确（左上角和右下角）
+    x_min = min(x1, x2)
+    y_min = min(y1, y2)
+    x_max = max(x1, x2)
+    y_max = max(y1, y2)
+    
+    # 截取矩形区域
+    region = screen_img[y_min:y_max, x_min:x_max]
+    
+    # 保存截取的区域
+    region_path = 'arrow_region.png'
+    cv2.imwrite(region_path, cv2.cvtColor(region, cv2.COLOR_RGB2BGR))
+    print(f"已截取箭头区域: ({x_min}, {y_min}) 到 ({x_max}, {y_max}), 保存到 {region_path}")
+
