@@ -3,6 +3,8 @@ import pyautogui
 import cv2
 import numpy as np
 import win32gui
+import win32api
+import win32con
 from datetime import datetime
 import math
 import mouse_control
@@ -630,22 +632,61 @@ if __name__ == "__main__":
                 print(f"当前箭头朝向: {current_arrow_angle}°")
                 print(f"目标方向（连接线角度）: {target_angle}°")
                 
-                # # 调用mouse_control模块对齐视角
-                # print("\n开始调整视角...")
-                # print("3秒后开始调整...")
-                # time.sleep(3)
+                # 调用mouse_control模块对齐视角
+                print("\n开始调整视角...")
+                print("3秒后开始调整...")
+                time.sleep(3)
                 
-                align_result = mouse_control.align_arrow_to_target(
-                    current_arrow_angle, 
-                    target_angle, 
-                    sensitivity=2.0,
-                    max_iterations=5
-                )
+                # 点按鼠标右键
+                # print("点按鼠标右键...")
+                # import win32con
+                # win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+                # time.sleep(0.1)
+                # win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+                # time.sleep(0.3)
                 
-                if align_result['success']:
-                    print(f"视角对齐成功！")
+                # 15次调整上限
+                max_adjustments = 15
+                current_angle = current_arrow_angle
+                angle_diff = 0
+                
+                for adjustment_count in range(max_adjustments):
+                    print(f"\n[调整 {adjustment_count + 1}/{max_adjustments}]")
+                    
+                    # 计算角度差
+                    angle_diff, direction = mouse_control.calculate_angle_difference(current_angle, target_angle)
+                    print(f"当前角度: {current_angle:.2f}°, 目标: {target_angle:.2f}°, 差异: {angle_diff:.2f}°")
+                    
+                    # 检查是否对齐（容差1度）
+                    if angle_diff < 1:
+                        print(f"✓ 对齐完成！")
+                        break
+                    
+                    # 执行调整
+                    result = mouse_control.adjust_view_angle(current_angle, target_angle, sensitivity=2.0)
+                    
+                    time.sleep(1.0)  # 等待游戏更新视角
+                    
+                    # 重新截图检测箭头角度
+                    print("重新检测箭头角度...")
+                    result_check = capture_rectangle(region2_top_left, region2_bottom_right)
+                    if result_check:
+                        img_check, coords_check = result_check
+                        arrow_result_check = tiqu.get_arrow_direction(img_check, save_marked=False)
+                        if arrow_result_check is not None:
+                            current_angle = arrow_result_check['angle']
+                            print(f"新的箭头角度: {current_angle:.2f}°")
+                        else:
+                            print("未能检测到箭头，保持当前角度")
+                    else:
+                        print("截图失败，保持当前角度")
+                    
+                    time.sleep(0.5)
+                
+                if angle_diff < 1:
+                    print(f"\n视角对齐成功！")
                 else:
-                    print(f"视角对齐未完成，剩余差异: {mouse_control.calculate_angle_difference(align_result['final_angle'], target_angle)[0]:.2f}°")
+                    print(f"\n视角调整完成，剩余差异: {angle_diff:.2f}°")
             else:
                 print("未能检测到箭头")
     else:

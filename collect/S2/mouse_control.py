@@ -48,22 +48,16 @@ def calculate_angle_difference(current_angle, target_angle):
 
 def move_mouse_relative(dx, dy, duration=0.1):
     """
-    相对移动鼠标
+    相对移动鼠标（使用mouse_event）
     
     Args:
         dx: X轴移动距离（正数向右，负数向左）
         dy: Y轴移动距离（正数向下，负数向上）
         duration: 移动持续时间（秒）
     """
-    # 获取当前鼠标位置
-    current_x, current_y = win32api.GetCursorPos()
-    
-    # 计算目标位置
-    target_x = current_x + dx
-    target_y = current_y + dy
-    
-    # 移动鼠标
-    win32api.SetCursorPos((target_x, target_y))
+    # 使用mouse_event进行相对移动
+    # MOUSEEVENTF_MOVE = 0x0001
+    win32api.mouse_event(0x0001, dx, dy, 0, 0)
     time.sleep(duration)
 
 
@@ -191,29 +185,10 @@ def align_arrow_to_target(arrow_angle, target_angle, sensitivity=1.0, max_iterat
 if __name__ == "__main__":
     # 测试示例
     print("鼠标控制模块测试")
-    print("=" * 50)
     
-    # 测试1：向右转动（顺时针）
-    print("\n测试1: 向右转动30度")
-    print("-" * 50)
-    current = 0.0
-    target = 30.0
-    result = align_arrow_to_target(current, target, sensitivity=2.0, max_iterations=3)
-    print(f"结果: {result}\n")
+    # 示例：将当前视角从45度调整到135度
+    current = 45.0
+    target = 135.0
     
-    # 测试2：向左转动（逆时针）
-    print("\n测试2: 向左转动45度")
-    print("-" * 50)
-    current = 90.0
-    target = 45.0
-    result = align_arrow_to_target(current, target, sensitivity=2.0, max_iterations=3)
-    print(f"结果: {result}\n")
-    
-    # 测试3：大角度转动
-    print("\n测试3: 从0度转到270度（向左转动90度）")
-    print("-" * 50)
-    current = 0.0
-    target = 270.0
-    result = align_arrow_to_target(current, target, sensitivity=2.0, max_iterations=5)
-    print(f"结果: {result}")
-
+    result = align_arrow_to_target(current, target, sensitivity=2.0)
+    print(f"\n结果: {result}")
