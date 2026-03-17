@@ -255,7 +255,7 @@ if __name__ == "__main__":
         img2 = None
         coords2 = None
         template_paths = [
-            r"D:\mingriHelper\collect\S2\images\point\point.png",
+            r"D:\mingriHelper\collect\S2\images\point\point_1.png",
             r"D:\mingriHelper\collect\S2\images\point\point_2.png"
         ]
         
