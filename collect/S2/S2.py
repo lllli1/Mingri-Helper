@@ -10,6 +10,7 @@ import math
 import mouse_control
 import screenshot
 import tiqu
+import pathfinding
 
 
 def get_game_window_rect():
@@ -230,7 +231,7 @@ if __name__ == "__main__":
     
     # 图像匹配并点击
     template_path = r"D:\mingriHelper\collect\S2\images\gatherTeam\gatherTeam_ico.png"
-    if match_and_click(template_path, confidence=0.7):
+    if match_and_click(template_path, confidence=0.6):
         print("\n点击成功，按下ESC键...")
         press_esc_key()
         time.sleep(1)
@@ -300,6 +301,89 @@ if __name__ == "__main__":
                         print(f"箭头凹点位置: {arrow_result['notch']}")
                         if arrow_result['marked_path']:
                             print(f"箭头标记图像已保存: {arrow_result['marked_path']}")
+                        
+                        print("\n开始对齐箭头方向到连接线...")
+                        arrow_angle = arrow_result['angle']
+                        connection_angle = connection_result['angle']
+                        target_angle = connection_angle
+                        
+                        print(f"当前箭头角度: {arrow_angle:.2f}°")
+                        print(f"目标连接线角度: {target_angle:.2f}°")
+                        
+                        current_angle = mouse_control.normalize_angle(arrow_angle)
+                        max_iterations = 30
+                        iterations = 0
+                        sensitivity = 2.0
+                        
+                        while iterations < max_iterations:
+                            angle_diff, direction = mouse_control.calculate_angle_difference(current_angle, target_angle)
+                            
+                            if angle_diff < 1:
+                                print(f"\n✓ 对齐完成！")
+                                print(f"最终角度: {current_angle:.2f}°, 目标角度: {target_angle:.2f}°")
+                                break
+                            
+                            print(f"[迭代 {iterations+1}] 角度差: {angle_diff:.2f}°, 方向: {direction}")
+                            
+                            pixel_distance = int(angle_diff * sensitivity)
+                            
+                            if direction == 'left':
+                                print(f"  向左移动 {pixel_distance} 像素")
+                                mouse_control.move_mouse_relative(-pixel_distance, 0, duration=0.05)
+                            else:
+                                print(f"  向右移动 {pixel_distance} 像素")
+                                mouse_control.move_mouse_relative(pixel_distance, 0, duration=0.05)
+                            
+                            time.sleep(0.2)
+                            
+                            result2 = screenshot.capture_rectangle(region2_top_left, region2_bottom_right,
+                                                                  save_path=os.path.join(output_dir, "mainPosition_after_adjust.png"))
+                            if result2:
+                                img2_new, _ = result2
+                                arrow_result_new = tiqu.get_arrow_direction(img2_new, process_scale=8, save_marked=False)
+                                if arrow_result_new:
+                                    current_angle = mouse_control.normalize_angle(arrow_result_new['angle'])
+                                    print(f"  实测角度: {current_angle:.2f}°")
+                                else:
+                                    print(f"  箭头检测失败，使用估算角度")
+                                    if direction == 'right':
+                                        current_angle = mouse_control.normalize_angle(current_angle + angle_diff)
+                                    else:
+                                        current_angle = mouse_control.normalize_angle(current_angle - angle_diff)
+                            else:
+                                print(f"  截图失败，使用估算角度")
+                                if direction == 'right':
+                                    current_angle = mouse_control.normalize_angle(current_angle + angle_diff)
+                                else:
+                                    current_angle = mouse_control.normalize_angle(current_angle - angle_diff)
+                            
+                            iterations += 1
+                        
+                        if iterations >= max_iterations:
+                            print(f"\n达到最大迭代次数，未完全对齐")
+                            print(f"最终角度: {current_angle:.2f}°")
+                        
+                        print("\n" + "="*60)
+                        print("开始寻路...")
+                        print("="*60)
+                        
+                        pathfinding_result = pathfinding.pathfinding(
+                            duration=60,
+                            jump_interval=1.0,
+                            region_top_left=region1_top_left,
+                            region_bottom_right=region1_bottom_right,
+                            stuck_check_interval=4.0,
+                            stuck_threshold=0.05,
+                            initial_arrow_angle=current_angle
+                        )
+                        
+                        if pathfinding_result['success']:
+                            print(f"\n✓ 寻路完成！")
+                            print(f"耗时: {pathfinding_result['duration']:.1f}秒")
+                            print(f"跳跃次数: {pathfinding_result['jump_count']}")
+                            print(f"卡住次数: {pathfinding_result['stuck_count']}")
+                        else:
+                            print(f"\n✗ 寻路失败")
                     else:
                         print("箭头分析失败")
                 else:

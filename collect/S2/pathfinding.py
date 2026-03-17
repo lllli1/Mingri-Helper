@@ -167,11 +167,14 @@ def pathfinding(duration=60, jump_interval=1.0, region_top_left=(0.865, 0.08), r
     W_KEY = 0x57
     # 空格键的虚拟键码是0x20
     SPACE_KEY = 0x20
+    # Shift键的虚拟键码是0x10
+    SHIFT_KEY = 0x10
     
-    print("持续按下W键，每1秒按下空格键...")
+    print("持续按下W键+Shift键，每1秒按下空格键...")
     
-    # 持续按下W键
+    # 持续按下W键和Shift键
     hold_key(W_KEY)
+    hold_key(SHIFT_KEY)
     
     start_time = time.time()
     last_jump_time = start_time
@@ -200,7 +203,8 @@ def pathfinding(duration=60, jump_interval=1.0, region_top_left=(0.865, 0.08), r
                     print(f"\n✓ 卡住了！开始旋转...")
                     stuck_count += 1
                     
-                    # 释放W键，进行旋转
+                    # 释放W键和Shift键，进行旋转
+                    release_key(SHIFT_KEY)
                     release_key(W_KEY)
                     time.sleep(0.2)
                     
@@ -220,9 +224,10 @@ def pathfinding(duration=60, jump_interval=1.0, region_top_left=(0.865, 0.08), r
                         current_arrow_angle = rotation_result['final_angle']
                         print(f"旋转未完全成功，继续寻路。当前方向: {current_arrow_angle:.2f}°")
                     
-                    # 旋转完成后，重新按下W键继续寻路
+                    # 旋转完成后，重新按下W键和Shift键继续寻路
                     print("重新开始寻路...")
                     hold_key(W_KEY)
+                    hold_key(SHIFT_KEY)
                     time.sleep(0.2)
                     
                     # 重置计时器
@@ -235,7 +240,8 @@ def pathfinding(duration=60, jump_interval=1.0, region_top_left=(0.865, 0.08), r
             time.sleep(0.1)  # 小延迟避免CPU占用过高
     
     finally:
-        # 释放W键
+        # 释放W键和Shift键
+        release_key(SHIFT_KEY)
         release_key(W_KEY)
         print(f"\n寻路完成！")
         print(f"总耗时: {time.time() - start_time:.1f}秒")
