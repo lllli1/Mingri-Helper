@@ -182,6 +182,91 @@ def align_arrow_to_target(arrow_angle, target_angle, sensitivity=1.0, max_iterat
     }
 
 
+def getover(initial_arrow_angle, rotation_target=30, sensitivity=1.0, max_iterations=10, step_delay=0.05):
+    """
+    旋转指定度数（默认30度）
+    
+    Args:
+        initial_arrow_angle: 初始箭头朝向角度 (0-360)
+        rotation_target: 目标旋转度数（默认30度）
+        sensitivity: 鼠标移动灵敏度（像素/度）
+        max_iterations: 最大迭代次数
+        step_delay: 每步移动的延迟（秒）
+    
+    Returns:
+        dict: 包含旋转结果
+    """
+    print(f"\n开始旋转...")
+    print(f"初始箭头方向: {initial_arrow_angle:.2f}°")
+    print(f"目标旋转度数: {rotation_target}°")
+    
+    # 点按鼠标右键
+    # print("点按鼠标右键...")
+    # win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTDOWN, 0, 0, 0, 0)
+    # time.sleep(0.1)
+    # win32api.mouse_event(win32con.MOUSEEVENTF_RIGHTUP, 0, 0, 0, 0)
+    # time.sleep(0.3)  # 等待右键点击完成
+    
+    current_angle = normalize_angle(initial_arrow_angle)
+    previous_angle = current_angle
+    target_angle = normalize_angle(initial_arrow_angle + rotation_target)
+    iterations = 0
+    total_rotation = 0
+    
+    while iterations < max_iterations:
+        # 计算当前旋转量（当前角度 - 初始角度）
+        rotation_amount = normalize_angle(current_angle - initial_arrow_angle)
+        
+        # 如果旋转量接近目标旋转度数，认为成功
+        if abs(rotation_amount - rotation_target) < 1 or abs(rotation_amount - (rotation_target - 360)) < 1:
+            print(f"\n旋转完成！")
+            print(f"初始角度: {initial_arrow_angle:.2f}°")
+            print(f"最终角度: {current_angle:.2f}°")
+            print(f"实际旋转: {rotation_amount:.2f}°")
+            print(f"迭代次数: {iterations}")
+            return {
+                'success': True,
+                'initial_angle': initial_arrow_angle,
+                'final_angle': current_angle,
+                'rotation_amount': rotation_amount,
+                'target_rotation': rotation_target,
+                'iterations': iterations
+            }
+        
+        # 执行一步调整
+        result = adjust_view_angle(current_angle, target_angle, sensitivity=sensitivity, step_delay=step_delay)
+        
+        # 更新当前角度
+        angle_diff, direction = calculate_angle_difference(current_angle, target_angle)
+        if direction == 'right':
+            current_angle = normalize_angle(current_angle + angle_diff)
+        else:
+            current_angle = normalize_angle(current_angle - angle_diff)
+        
+        total_rotation += angle_diff
+        iterations += 1
+        
+        print(f"[迭代 {iterations}] 当前角度: {current_angle:.2f}°, 已旋转: {normalize_angle(current_angle - initial_arrow_angle):.2f}°")
+        
+        time.sleep(0.1)  # 等待一下再进行下一次调整
+    
+    print(f"\n达到最大迭代次数，旋转未完成")
+    print(f"初始角度: {initial_arrow_angle:.2f}°")
+    print(f"最终角度: {current_angle:.2f}°")
+    print(f"实际旋转: {normalize_angle(current_angle - initial_arrow_angle):.2f}°")
+    print(f"目标旋转: {rotation_target}°")
+    
+    return {
+        'success': False,
+        'initial_angle': initial_arrow_angle,
+        'final_angle': current_angle,
+        'rotation_amount': normalize_angle(current_angle - initial_arrow_angle),
+        'target_rotation': rotation_target,
+        'iterations': iterations,
+        'reason': 'max_iterations_reached'
+    }
+
+
 if __name__ == "__main__":
     # 测试示例
     print("鼠标控制模块测试")
